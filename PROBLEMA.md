@@ -18,12 +18,12 @@ El problema incorpora una extensión real del contexto universitario colombiano:
 
 | Parámetro | Tipo | Rango / Restricciones |
 |---|---|---|
-| `S` — conjunto de estudiantes | `Set<Estudiante>` | 1 ≤ \|S\| ≤ 100 000; cada estudiante tiene un ID único `long` > 0 |
-| `M` — conjunto de materias universitarias | `Set<Materia>` | 1 ≤ \|M\| ≤ 500; cada materia tiene un código `String` no vacío |
-| `R` — conjunto de registros académicos | `Set<Registro>` | Tripletas `(estudianteId, materiaId, nota)`; sin duplicados para el mismo par `(estudianteId, materiaId)` en el mismo período |
+| `S` — conjunto de estudiantes | `Set<Estudiante>` | 1 ≤ `\|S\|` ≤ 100 000; cada estudiante tiene un ID único `long` > 0 |
+| `M` — conjunto de materias universitarias | `Set<Materia>` | 1 ≤ `\|M\|` ≤ 500; cada materia tiene un código `String` no vacío |
+| `R` — conjunto de registros académicos | `Set<Registro>` | Tripletas `(estudianteId, materiaId, nota)`; sin duplicados para el mismo par en el mismo período |
 | `nota` — calificación numérica | `double` | 0.0 ≤ nota ≤ 5.0; escala colombiana estándar; dos decimales de precisión |
 | `icfes` — vector de puntaje ICFES | `PuntajeICFES` (record) | Opcional (nullable); componentes: Matemáticas, Lectura Crítica, Ciencias Naturales, Sociales y Ciudadanas, Inglés; cada componente en rango [0, 100] |
-| `perfilAdmision` — datos básicos de admisión | `PerfilAdmision` (record) | Opcional; contiene: programa académico (`String`), tipo de colegio (`PUBLICO`/`PRIVADO`), país de origen (`String`). Usado como fallback de último nivel para cold start verdadero |
+| `perfilAdmision` — datos básicos de admisión | `PerfilAdmision` (record) | Opcional; contiene: programa académico (`String`), tipo de colegio (`PUBLICO`/`PRIVADO`), país de origen (`String`). Fallback para cold start verdadero |
 | `umbralSimilitud` — parámetro de consulta | `double` | 0.0 < umbralSimilitud ≤ 1.0; determina qué tan parecidos deben ser dos estudiantes para considerarse gemelos académicos |
 | `umbralRiesgo` — nota de reprobación | `double` | 0.0 < umbralRiesgo ≤ 5.0; por defecto 3.0 en escala colombiana |
 | `estudianteId` — ID del estudiante a evaluar | `long` | Debe existir en el sistema; ≥ 1 |
@@ -32,8 +32,8 @@ El problema incorpora una extensión real del contexto universitario colombiano:
 
 ## Precondiciones
 
-- **Pre1:** El conjunto de estudiantes `S` no es nulo y contiene al menos un elemento (`|S| ≥ 1`).
-- **Pre2:** El conjunto de materias `M` no es nulo y contiene al menos un elemento (`|M| ≥ 1`).
+- **Pre1:** El conjunto de estudiantes `S` no es nulo y contiene al menos un elemento (`\|S\| ≥ 1`).
+- **Pre2:** El conjunto de materias `M` no es nulo y contiene al menos un elemento (`\|M\| ≥ 1`).
 - **Pre3:** Cada registro en `R` referencia un `estudianteId` que existe en `S` y un `materiaId` que existe en `M`.
 - **Pre4:** No existen dos registros en `R` con el mismo par `(estudianteId, materiaId)` para el mismo período académico.
 - **Pre5:** Todos los valores de `nota` satisfacen `0.0 ≤ nota ≤ 5.0`.
@@ -61,7 +61,7 @@ El problema incorpora una extensión real del contexto universitario colombiano:
 - **Inv1:** El grafo es estrictamente bipartito: nunca existe una arista entre dos estudiantes ni entre dos materias. Solo existen aristas del conjunto `S` al conjunto `M`.
 - **Inv2:** Los pesos de todas las aristas del grafo de notas satisfacen `0.0 ≤ peso ≤ 5.0` en todo momento.
 - **Inv3:** La similitud entre cualquier par de estudiantes satisface `0.0 ≤ similitud ≤ 1.0` (dado que los vectores son no negativos y la similitud coseno está acotada en ese rango para vectores en R⁺).
-- **Inv4:** El número total de aristas en el grafo satisface `|E| ≤ |S| × |M|`.
+- **Inv4:** El número total de aristas en el grafo satisface `\|E\| ≤ \|S\| × \|M\|`.
 - **Inv5:** La representación interna del grafo nunca contiene aristas duplicadas: cada par `(estudianteId, materiaId)` tiene como máximo una entrada.
 - **Inv6:** La estrategia de similitud seleccionada para un estudiante es determinista: dado el mismo perfil de datos disponibles, siempre se selecciona la misma estrategia.
 
@@ -75,7 +75,7 @@ El sistema implementa el **patrón Strategy** para el cálculo de similitud, sel
 ┌──────────────────────────────────────────────────────────────────────┐
 │              Árbol de decisión — Selección de Estrategia             │
 │                                                                      │
-│  ¿Tiene registros académicos universitarios (|R_e| ≥ 2)?            │
+│  ¿Tiene registros académicos universitarios (R_e ≥ 2)?              │
 │  ├── SÍ → ¿Tiene ICFES?                                             │
 │  │         ├── SÍ → HybridSimilarityStrategy (HYBRID)              │
 │  │         │         Vector: 70% notas + 30% ICFES normalizado      │
@@ -99,9 +99,9 @@ El sistema implementa el **patrón Strategy** para el cálculo de similitud, sel
 | `HybridSimilarityStrategy` | Estudiantes con notas universitarias **y** ICFES | Concatenación ponderada: notas (70%) + ICFES normalizado (30%) | Muy alta |
 | `DemographicFallbackStrategy` | Estudiantes sin ICFES y sin notas (ej: internacionales 1er semestre) | Matching por programa + tipo de colegio de origen | Baja (advertencia explícita) |
 
-### Caso Real: Estudiante Internacional (ej. venezolano)
+### Caso Real: Estudiante Internacional
 
-Un estudiante venezolano en primer semestre no tiene ICFES (examen colombiano) y no tiene aún notas universitarias. El sistema aplica `DemographicFallbackStrategy`:
+Un estudiante extranjero en primer semestre no tiene ICFES (examen colombiano) y no tiene aún notas universitarias. El sistema aplica `DemographicFallbackStrategy`:
 - Lo agrupa con estudiantes del mismo programa académico que tuvieron perfiles similares de colegio de origen.
 - Emite al consejero académico la advertencia `COLD_START_VERDADERO` con nivel de confianza **BAJO**.
 - En cuanto el estudiante obtiene su primera nota universitaria (inicio de 2do semestre o corte parcial del 1er semestre), el sistema recalcula automáticamente usando `GradeSimilarityStrategy`, eliminando la advertencia.
@@ -114,20 +114,20 @@ Un estudiante venezolano en primer semestre no tiene ICFES (examen colombiano) y
 
 | # | Caso | Comportamiento esperado |
 |---|---|---|
-| CB-01 | Conjunto de registros `R` vacío (sistema vacío) | El grafo se carga sin aristas. Todos los estudiantes se procesan con `ICFESSimilarityStrategy` o `DemographicFallbackStrategy` según disponibilidad de datos. |
-| CB-02 | Estudiante con un solo registro (`|R_e| = 1`) | No alcanza el umbral `|R_e| ≥ 2` para `GradeSimilarityStrategy`. Se usa `ICFESSimilarityStrategy` si tiene ICFES, o `DemographicFallbackStrategy` si no. |
-| CB-03 | Estudiante internacional sin ICFES en 1er semestre | Se aplica `DemographicFallbackStrategy`. Se emite advertencia `COLD_START_VERDADERO`. Confianza: BAJA. |
-| CB-04 | Estudiante internacional sin ICFES en 2do semestre (ya tiene notas) | Se aplica `GradeSimilarityStrategy` normalmente. El cold start se resuelve. |
-| CB-05 | Todos los estudiantes con notas idénticas en todas las materias | La similitud coseno entre todos los pares es 1.0. Las alertas se generan correctamente para materias con promedio grupal < `umbralRiesgo`. |
-| CB-06 | Estudiante que cursó materias que ningún otro cursó | Vector ortogonal a todos. Similitud = 0.0. Lista de riesgo vacía con advertencia. |
-| CB-07 | `umbralSimilitud = 1.0` (gemelos perfectos) | Solo estudiantes con vectores de notas idénticos. Muy restrictivo; probablemente sin gemelos en casos reales. |
-| CB-08 | Una sola materia en el sistema (`|M| = 1`) | El grafo bipartito tiene una sola "columna". Similitud coseno es 1.0 para todos los estudiantes con nota > 0 en esa materia. |
-| CB-09 | Un solo estudiante en el sistema (`|S| = 1`) | No hay gemelos posibles. Lista de riesgo vacía con advertencia. |
-| CB-10 | `N = |S| = 100 000` con `|M| = 500` (escala máxima) | El sistema debe completar la consulta en < 500 ms. El precálculo de índice puede tomar hasta 30 s (operación offline). |
-| CB-11 | Nota exactamente igual al umbral de reprobación (`nota == umbralRiesgo`) | Condición de reprobación es estrictamente menor (`< umbralRiesgo`). `nota = 3.0` con `umbralRiesgo = 3.0` **no** se considera reprobado. |
-| CB-12 | `estudianteId` no existente en el sistema | El sistema retorna `Result.err(EstudianteNoEncontradoException)` sin lanzar excepción unchecked. |
-| CB-13 | Vector ICFES con todos los componentes en 0 | Norma del vector = 0. La similitud coseno es indefinida (división por cero). El sistema lo trata como ICFES ausente y cae al nivel `DemographicFallbackStrategy`. |
-| CB-14 | Cambio de estrategia en tiempo de ejecución (transición warm-up) | Cuando un estudiante nuevo obtiene su primera nota universitaria, el sistema detecta el cambio de perfil y recalcula su estrategia en la siguiente consulta. No requiere reinicio del sistema. |
+| CB-01 | Conjunto de registros `R` vacío (sistema vacío) | El grafo se carga sin aristas. Se procesan con `ICFESSimilarityStrategy` o `DemographicFallbackStrategy` según datos disponibles. |
+| CB-02 | Estudiante con un solo registro (R_e = 1) | No alcanza el umbral R_e ≥ 2 para `GradeSimilarityStrategy`. Se usa `ICFESSimilarityStrategy` si tiene ICFES, o `DemographicFallbackStrategy` si no. |
+| CB-03 | Estudiante extranjero sin ICFES en 1er semestre | Se aplica `DemographicFallbackStrategy`. Se emite advertencia `COLD_START_VERDADERO`. Confianza: BAJA. |
+| CB-04 | Estudiante extranjero sin ICFES en 2do semestre (ya tiene notas) | Se aplica `GradeSimilarityStrategy` normalmente. El cold start se resuelve. |
+| CB-05 | Todos los estudiantes con notas idénticas | La similitud coseno entre todos los pares es 1.0. Alertas para materias con promedio grupal < `umbralRiesgo`. |
+| CB-06 | Estudiante cursó materias que ningún otro cursó | Vector ortogonal a todos. Similitud = 0.0. Lista de riesgo vacía con advertencia. |
+| CB-07 | `umbralSimilitud = 1.0` (gemelos perfectos) | Solo estudiantes con vectores idénticos. Muy restrictivo; probablemente sin gemelos en casos reales. |
+| CB-08 | Una sola materia en el sistema (M = 1) | El grafo bipartito tiene una sola "columna". Similitud coseno es 1.0 para todos los estudiantes con nota > 0. |
+| CB-09 | Un solo estudiante en el sistema (S = 1) | No hay gemelos posibles. Lista de riesgo vacía con advertencia. |
+| CB-10 | Escala máxima: N = 100 000, M = 500 | El sistema debe completar la consulta en < 500 ms. Precálculo de índice hasta 30 s (offline). |
+| CB-11 | Nota igual al umbral (`nota == umbralRiesgo`) | Condición de reprobación es estrictamente menor. `nota = 3.0` con `umbralRiesgo = 3.0` **no** se considera reprobado. |
+| CB-12 | `estudianteId` no existente en el sistema | Retorna `Result.err(EstudianteNoEncontradoException)` sin lanzar excepción unchecked. |
+| CB-13 | Vector ICFES con todos los componentes en 0 | Norma = 0 → similitud coseno indefinida. Se trata como ICFES ausente y cae a `DemographicFallbackStrategy`. |
+| CB-14 | Transición de estrategia en tiempo de ejecución | Cuando un estudiante obtiene su primera nota, el sistema recalcula su estrategia en la siguiente consulta. Sin reinicio. |
 
 ---
 
