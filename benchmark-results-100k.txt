@@ -1,0 +1,3 @@
+Benchmark                                      (n)  Mode  Cnt   Score    Error  Units
+RiesgoAcademicoBenchmark.baselineAlgorithm  100000  avgt    3  86,885 ± 98,451  ms/op
+RiesgoAcademicoBenchmark.mainAlgorithm      100000  avgt    3  24,494 ± 42,179  ms/op
