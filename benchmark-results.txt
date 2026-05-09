@@ -1,0 +1,9 @@
+Benchmark                                      (n)  Mode  Cnt      Score     Error  Units
+RiesgoAcademicoBenchmark.mainAlgorithm        1000  avgt    3      0.139  ±  0.749  ms/op
+RiesgoAcademicoBenchmark.mainAlgorithm       10000  avgt    3      1.343  ±  1.178  ms/op
+RiesgoAcademicoBenchmark.mainAlgorithm      100000  avgt    3     24.494  ± 42.179  ms/op
+RiesgoAcademicoBenchmark.mainAlgorithm      500000  avgt    2    965.816           ms/op
+RiesgoAcademicoBenchmark.baselineAlgorithm    1000  avgt    3      0.588  ±  1.788  ms/op
+RiesgoAcademicoBenchmark.baselineAlgorithm   10000  avgt    3      8.390  ± 14.754  ms/op
+RiesgoAcademicoBenchmark.baselineAlgorithm  100000  avgt    3     86.885  ± 98.451  ms/op
+RiesgoAcademicoBenchmark.baselineAlgorithm  500000  avgt    2  18301.149           ms/op
