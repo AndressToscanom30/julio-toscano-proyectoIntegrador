@@ -190,7 +190,7 @@ mvn test -Dtest="!AlgorithmPropertyTest"
 ## 📐 Especificación formal
 
 Ver [PROBLEMA.md](PROBLEMA.md) para:
-- Pre/postcondiciones formales (Pre1–Pre5, Post1–Post5)
+- Pre/postcondiciones formales (Pre1–Pre8, Post1–Post6)
 - Invariantes del sistema (Inv1–Inv6)
 - 14 casos borde documentados
 - Restricciones de escala (N = 100 000, latencia < 500 ms)
