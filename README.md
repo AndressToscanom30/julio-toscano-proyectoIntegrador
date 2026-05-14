@@ -1,4 +1,4 @@
-# 🎓 Sistema de Detección de Riesgo Académico
+# Sistema de Detección de Riesgo Académico
 
 ### Grafo Bipartito Ponderado con Collaborative Filtering
 
@@ -7,24 +7,24 @@
 
 ---
 
-## 📖 Tabla de Contenido
+## Tabla de Contenido
 
-- [Descripción del Problema](#-descripción-del-problema)
-- [¿Cómo funciona?](#-cómo-funciona)
-- [Arquitectura del Sistema](#️-arquitectura-del-sistema)
-- [Decisiones de Diseño (ADRs)](#-decisiones-de-diseño-adrs)
-- [Requisitos](#-requisitos)
-- [Compilación y Ejecución](#-compilación-y-ejecución)
-- [Suite de Pruebas](#-suite-de-pruebas)
-- [Resultados de Benchmarks](#-resultados-de-benchmarks)
-- [Métricas de Calidad](#-métricas-de-calidad)
-- [Especificación Formal](#-especificación-formal)
-- [Estructura del Repositorio](#-estructura-del-repositorio)
-- [Autores](#-autores)
+- [Descripción del Problema](#descripción-del-problema)
+- [¿Cómo funciona?](#cómo-funciona)
+- [Arquitectura del Sistema](#arquitectura-del-sistema)
+- [Decisiones de Diseño (ADRs)](#decisiones-de-diseño-adrs)
+- [Requisitos](#requisitos)
+- [Compilación y Ejecución](#compilación-y-ejecución)
+- [Suite de Pruebas](#suite-de-pruebas)
+- [Resultados de Benchmarks](#resultados-de-benchmarks)
+- [Métricas de Calidad](#métricas-de-calidad)
+- [Especificación Formal](#especificación-formal)
+- [Estructura del Repositorio](#estructura-del-repositorio)
+- [Autores](#autores)
 
 ---
 
-## 📋 Descripción del Problema
+## Descripción del Problema
 
 En universidades con miles de estudiantes, **identificar de forma preventiva quién tiene alta probabilidad de reprobar una asignatura** es crítico para la intervención oportuna. Actualmente, las alertas llegan cuando el estudiante ya reprobó — demasiado tarde.
 
@@ -42,18 +42,18 @@ Un estudiante de primer semestre no tiene notas → el sistema no puede ubicarlo
 
 ```
 ¿Tiene notas universitarias (≥ 2)?
-├── SÍ + ICFES → 🟢 Estrategia Híbrida (70% notas + 30% ICFES) — Confianza MUY ALTA
-├── SÍ sin ICFES → 🟢 Estrategia por Notas — Confianza ALTA
+├── SÍ + ICFES → Estrategia Híbrida (70% notas + 30% ICFES) — Confianza MUY ALTA
+├── SÍ sin ICFES → Estrategia por Notas — Confianza ALTA
 └── NO → ¿Tiene ICFES (Saber 11)?
-          ├── SÍ → 🟡 Estrategia ICFES (5 componentes) — Confianza MEDIA
-          └── NO → 🔴 Estrategia Demográfica (programa + colegio) — Confianza BAJA
+          ├── SÍ → Estrategia ICFES (5 componentes) — Confianza MEDIA
+          └── NO → Estrategia Demográfica (programa + colegio) — Confianza BAJA
 ```
 
 > **¿Por qué ICFES?** En Colombia, las universidades exigen el puntaje ICFES (Saber 11) para admisión. Si dos estudiantes tienen puntajes ICFES similares, es probable que tengan rendimiento académico similar. Para estudiantes **extranjeros** sin ICFES (ej: primer semestre), el sistema usa un fallback demográfico con advertencia explícita al consejero.
 
 ---
 
-## 🔬 ¿Cómo funciona?
+## ¿Cómo funciona?
 
 ### 1. Construcción del Grafo Bipartito
 
@@ -99,7 +99,7 @@ Salida:  [MateriaEnRiesgo("CAL2", "Cálculo II", riesgo=0.58, gemelos=1)]
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 El sistema sigue **Clean Architecture** con separación estricta entre dominio e infraestructura:
 
@@ -155,7 +155,7 @@ src/main/java/com/universidad/riesgoacademico/
 
 ---
 
-## 📐 Decisiones de Diseño (ADRs)
+## Decisiones de Diseño (ADRs)
 
 El proyecto documenta **3 Architecture Decision Records** en formato MADR, cada uno con ≥2 alternativas rechazadas y consecuencias negativas específicas:
 
@@ -167,7 +167,7 @@ El proyecto documenta **3 Architecture Decision Records** en formato MADR, cada 
 
 ---
 
-## 🔧 Requisitos
+## Requisitos
 
 | Requisito | Versión |
 |-----------|---------|
@@ -177,7 +177,7 @@ El proyecto documenta **3 Architecture Decision Records** en formato MADR, cada 
 
 ---
 
-## ⚡ Compilación y Ejecución
+## Compilación y Ejecución
 
 ```bash
 # Compilar el proyecto
@@ -211,7 +211,7 @@ java -Xmx6g -jar target/benchmarks.jar -p n=500000 -wi 1 -i 2 -f 1
 
 ---
 
-## 🧪 Suite de Pruebas
+## Suite de Pruebas
 
 ### 91 tests · 0 fallos · 5 propiedades algebraicas
 
@@ -235,7 +235,7 @@ java -Xmx6g -jar target/benchmarks.jar -p n=500000 -wi 1 -i 2 -f 1
 
 ---
 
-## 📊 Resultados de Benchmarks
+## Resultados de Benchmarks
 
 ### Comparación: Índice Invertido vs Fuerza Bruta
 
@@ -266,7 +266,7 @@ java -Xmx6g -jar target/benchmarks.jar -p n=500000 -wi 1 -i 2 -f 1
 
 ---
 
-## 📏 Métricas de Calidad
+## Métricas de Calidad
 
 | Métrica | Umbral requerido | Resultado | Herramienta |
 |---------|:----------------:|:---------:|-------------|
@@ -280,7 +280,7 @@ java -Xmx6g -jar target/benchmarks.jar -p n=500000 -wi 1 -i 2 -f 1
 
 ---
 
-## 📐 Especificación Formal
+## Especificación Formal
 
 La especificación completa del problema está en [PROBLEMA.md](PROBLEMA.md):
 
@@ -294,7 +294,7 @@ La especificación completa del problema está en [PROBLEMA.md](PROBLEMA.md):
 
 ---
 
-## 📁 Estructura del Repositorio
+## Estructura del Repositorio
 
 ```
 julio-toscano-proyectoIntegrador/
@@ -337,12 +337,12 @@ julio-toscano-proyectoIntegrador/
 
 ---
 
-## 👥 Autores
+## Autores
 
-| | Nombre | Rol |
-|---|--------|-----|
-| 👤 | **Keiver Castellanos** | Ingeniería de Sistemas · UDES 2026 |
-| 👤 | **Andrés Toscano** | Ingeniería de Sistemas · UDES 2026 |
+| Nombre | Rol |
+|--------|-----|
+| **Keiver Castellanos** | Ingeniería de Sistemas · UDES 2026 |
+| **Andrés Toscano** | Ingeniería de Sistemas · UDES 2026 |
 
 ---
 
