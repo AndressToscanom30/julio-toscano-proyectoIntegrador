@@ -112,7 +112,7 @@
                 <version>${pmd.version}</version>
                 <configuration>
                     <rulesets>
-                        <ruleset>category/java/design.xml/CyclomaticComplexity</ruleset>
+                        <ruleset>pmd-rules.xml</ruleset>
                     </rulesets>
                     <failOnViolation>true</failOnViolation>
                     <printFailingErrors>true</printFailingErrors>
