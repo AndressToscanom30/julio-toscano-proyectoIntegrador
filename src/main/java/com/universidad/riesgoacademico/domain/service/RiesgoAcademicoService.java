@@ -29,6 +29,7 @@ public final class RiesgoAcademicoService {
     private GradeSimilarityStrategy gradeStrategy;
     private ICFESSimilarityStrategy icfesStrategy;
     private HybridSimilarityStrategy hybridStrategy;
+    private HighSchoolSimilarityStrategy highSchoolStrategy;
     private DemographicFallbackStrategy demographicStrategy;
 
     /**
@@ -160,6 +161,7 @@ public final class RiesgoAcademicoService {
     SimilarityStrategy seleccionarEstrategia(Estudiante estudiante) {
         boolean tieneNotas = grafo.getNumRegistros(estudiante.getId()) >= MIN_REGISTROS_PARA_NOTAS;
         boolean tieneIcfes = estudiante.tieneIcfesValido();
+        boolean tieneNotasColegio = estudiante.tieneNotasColegioValidas();
 
         if (tieneNotas && tieneIcfes) {
             return getHybridStrategy();
@@ -167,6 +169,8 @@ public final class RiesgoAcademicoService {
             return getGradeStrategy();
         } else if (tieneIcfes) {
             return getIcfesStrategy();
+        } else if (tieneNotasColegio) {
+            return getHighSchoolStrategy();
         } else {
             return getDemographicStrategy();
         }
@@ -255,6 +259,7 @@ public final class RiesgoAcademicoService {
         gradeStrategy = null;
         icfesStrategy = null;
         hybridStrategy = null;
+        highSchoolStrategy = null;
         demographicStrategy = null;
     }
 
@@ -284,6 +289,13 @@ public final class RiesgoAcademicoService {
             demographicStrategy = new DemographicFallbackStrategy(estudiantes);
         }
         return demographicStrategy;
+    }
+
+    private HighSchoolSimilarityStrategy getHighSchoolStrategy() {
+        if (highSchoolStrategy == null) {
+            highSchoolStrategy = new HighSchoolSimilarityStrategy(estudiantes);
+        }
+        return highSchoolStrategy;
     }
 
     /** @return grafo bipartito interno (para benchmarks y pruebas) */

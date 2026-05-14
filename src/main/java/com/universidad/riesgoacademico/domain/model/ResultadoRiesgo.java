@@ -29,6 +29,8 @@ public record ResultadoRiesgo(
         GRADE_BASED,
         /** Similitud coseno sobre vector ICFES de 5 componentes. */
         ICFES_BASED,
+        /** Similitud coseno sobre notas de colegio homologadas a escala colombiana. */
+        HIGH_SCHOOL_BASED,
         /** Combinación ponderada: 70% notas + 30% ICFES normalizado. */
         HYBRID,
         /** Agrupación demográfica por programa + tipo de colegio. Confianza baja. */

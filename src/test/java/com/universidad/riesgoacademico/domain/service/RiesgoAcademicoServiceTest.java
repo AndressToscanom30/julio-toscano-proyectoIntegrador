@@ -68,14 +68,42 @@ class RiesgoAcademicoServiceTest {
     }
 
     @Test
-    @DisplayName("Selecciona DEMOGRAPHIC_FALLBACK sin ICFES y sin notas (CB-03)")
-    void seleccionaDemographic_sinIcfesSinNotas() {
+    @DisplayName("Selecciona DEMOGRAPHIC_FALLBACK sin ICFES, sin notas y sin colegio (CB-03)")
+    void seleccionaDemographic_sinIcfesSinNotasSinColegio() {
         PerfilAdmision perfil = new PerfilAdmision("ING_SISTEMAS", TipoColegio.PUBLICO, "VE");
         Estudiante e = new Estudiante(1L, "María", null, perfil);
         service.registrarEstudiante(e);
 
         SimilarityStrategy estrategia = service.seleccionarEstrategia(e);
         assertThat(estrategia.getTipo()).isEqualTo(EstrategiaSimilitud.DEMOGRAPHIC_FALLBACK);
+    }
+
+    @Test
+    @DisplayName("Selecciona HIGH_SCHOOL_BASED con notas de colegio homologadas, sin ICFES ni notas univ.")
+    void seleccionaHighSchool_conNotasColegioSinIcfesSinNotas() {
+        java.util.Map<String, Double> notas = java.util.Map.of(
+                "Matemáticas", 4.0, "Ciencias", 3.5, "Lenguaje", 4.2);
+        NotasColegio nc = new NotasColegio(notas);
+        Estudiante e = new Estudiante(1L, "Carlos", null, null, nc);
+        service.registrarEstudiante(e);
+
+        SimilarityStrategy estrategia = service.seleccionarEstrategia(e);
+        assertThat(estrategia.getTipo()).isEqualTo(EstrategiaSimilitud.HIGH_SCHOOL_BASED);
+    }
+
+    @Test
+    @DisplayName("HIGH_SCHOOL_BASED tiene prioridad sobre DEMOGRAPHIC_FALLBACK")
+    void highSchool_prioridadSobreDemographic() {
+        java.util.Map<String, Double> notas = java.util.Map.of(
+                "Matemáticas", 4.0, "Ciencias", 3.5);
+        NotasColegio nc = new NotasColegio(notas);
+        PerfilAdmision perfil = new PerfilAdmision("ING_SISTEMAS", TipoColegio.PUBLICO, "EC");
+        Estudiante e = new Estudiante(1L, "Luis", null, perfil, nc);
+        service.registrarEstudiante(e);
+
+        SimilarityStrategy estrategia = service.seleccionarEstrategia(e);
+        // Tiene ambos datos, pero HIGH_SCHOOL_BASED tiene mayor prioridad que DEMOGRAPHIC
+        assertThat(estrategia.getTipo()).isEqualTo(EstrategiaSimilitud.HIGH_SCHOOL_BASED);
     }
 
     // ========== Análisis de Riesgo ==========

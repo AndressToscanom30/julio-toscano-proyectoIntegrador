@@ -50,7 +50,7 @@ El problema incorpora una extensión real del contexto universitario colombiano:
 - **Post1:** Para cada par de estudiantes `(e1, e2)` reportado como gemelos académicos, la similitud calculada (según la estrategia activa) satisface `similitud(e1, e2) ≥ umbralSimilitud`.
 - **Post2:** El sistema retorna una lista de materias en riesgo para el estudiante consultado. Una materia `m` aparece en la lista si y solo si existe al menos un gemelo académico `e2` de `e1` tal que `e2` obtuvo `nota(e2, m) < umbralRiesgo` en un período anterior.
 - **Post3:** La lista de materias en riesgo está ordenada de mayor a menor nivel de riesgo estimado (`nivelRiesgo = 1 - promedio_nota_gemelos(m)`).
-- **Post4:** El resultado incluye metadatos de la estrategia utilizada: `GRADE_BASED`, `ICFES_BASED`, `HYBRID`, o `DEMOGRAPHIC_FALLBACK`, permitiendo al consejero académico conocer el nivel de confianza de la predicción.
+- **Post4:** El resultado incluye metadatos de la estrategia utilizada: `GRADE_BASED`, `ICFES_BASED`, `HIGH_SCHOOL_BASED`, `HYBRID`, o `DEMOGRAPHIC_FALLBACK`, permitiendo al consejero académico conocer el nivel de confianza de la predicción.
 - **Post5:** El resultado es reproducible: para las mismas entradas y el mismo `umbralSimilitud`, el sistema produce exactamente la misma lista de materias en riesgo.
 - **Post6:** Si no es posible calcular similitud con ningún otro estudiante (cold start verdadero sin datos suficientes), el sistema retorna `Result.err(ColdStartException)` con el nivel de cold start identificado, sin lanzar excepción unchecked.
 
@@ -72,7 +72,7 @@ El problema incorpora una extensión real del contexto universitario colombiano:
 El sistema implementa el **patrón Strategy** para el cálculo de similitud, seleccionando automáticamente la estrategia apropiada según los datos disponibles del estudiante:
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────────────────────────┐
 │              Árbol de decisión — Selección de Estrategia             │
 │                                                                      │
 │  ¿Tiene registros académicos universitarios (R_e ≥ 2)?              │
@@ -84,10 +84,15 @@ El sistema implementa el **patrón Strategy** para el cálculo de similitud, sel
 │  └── NO → ¿Tiene ICFES?                                             │
 │            ├── SÍ → ICFESSimilarityStrategy (ICFES_BASED)           │
 │            │         Similitud coseno sobre vector ICFES [0,100]^5   │
-│            └── NO → DemographicFallbackStrategy (DEMOGRAPHIC_FALLBACK)│
-│                      Agrupa por: programa + tipo colegio             │
-│                      Emite advertencia: COLD_START_VERDADERO         │
-└──────────────────────────────────────────────────────────────────────┘
+│            └── NO → ¿Tiene notas de colegio homologadas?            │
+│                      ├── SÍ → HighSchoolSimilarityStrategy         │
+│                      │         (HIGH_SCHOOL_BASED)                  │
+│                      │         Coseno sobre notas homologadas [0,5]  │
+│                      └── NO → DemographicFallbackStrategy          │
+│                                (DEMOGRAPHIC_FALLBACK)               │
+│                                Agrupa por: programa + tipo colegio   │
+│                                Emite: COLD_START_VERDADERO           │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Descripción de Estrategias
@@ -97,11 +102,12 @@ El sistema implementa el **patrón Strategy** para el cálculo de similitud, sel
 | `GradeSimilarityStrategy` | Estudiantes con ≥2 notas universitarias y sin ICFES | Notas en materias compartidas (ℝ^M) | Alta |
 | `ICFESSimilarityStrategy` | Estudiantes de 1er semestre colombianos con ICFES | Vector ICFES de 5 componentes (ℝ^5) | Media |
 | `HybridSimilarityStrategy` | Estudiantes con notas universitarias **y** ICFES | Concatenación ponderada: notas (70%) + ICFES normalizado (30%) | Muy alta |
-| `DemographicFallbackStrategy` | Estudiantes sin ICFES y sin notas (ej: internacionales 1er semestre) | Matching por programa + tipo de colegio de origen | Baja (advertencia explícita) |
+| `HighSchoolSimilarityStrategy` | Extranjeros con notas de colegio homologadas a escala colombiana, sin ICFES ni notas univ. | Notas de colegio homologadas en asignaturas compartidas (ℝ^k) | Media-baja |
+| `DemographicFallbackStrategy` | Estudiantes sin ICFES, sin notas univ. y sin notas de colegio (cold start verdadero) | Matching por programa + tipo de colegio de origen | Baja (advertencia explícita) |
 
 ### Caso Real: Estudiante Internacional
 
-Un estudiante extranjero en primer semestre no tiene ICFES (examen colombiano) y no tiene aún notas universitarias. El sistema aplica `DemographicFallbackStrategy`:
+Un estudiante extranjero en primer semestre no tiene ICFES (examen colombiano) y no tiene aún notas universitarias. Si sus notas de bachillerato fueron homologadas por el MEN o la universidad al momento de la admisión, el sistema aplica `HighSchoolSimilarityStrategy` con similitud coseno sobre las notas homologadas en escala colombiana (0.0 - 5.0). Si tampoco tiene notas de colegio homologadas, el sistema aplica `DemographicFallbackStrategy`:
 - Lo agrupa con estudiantes del mismo programa académico que tuvieron perfiles similares de colegio de origen.
 - Emite al consejero académico la advertencia `COLD_START_VERDADERO` con nivel de confianza **BAJO**.
 - En cuanto el estudiante obtiene su primera nota universitaria (inicio de 2do semestre o corte parcial del 1er semestre), el sistema recalcula automáticamente usando `GradeSimilarityStrategy`, eliminando la advertencia.

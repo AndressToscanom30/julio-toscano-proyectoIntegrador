@@ -46,10 +46,12 @@ Un estudiante de primer semestre no tiene notas → el sistema no puede ubicarlo
 ├── SÍ sin ICFES → Estrategia por Notas — Confianza ALTA
 └── NO → ¿Tiene ICFES (Saber 11)?
           ├── SÍ → Estrategia ICFES (5 componentes) — Confianza MEDIA
-          └── NO → Estrategia Demográfica (programa + colegio) — Confianza BAJA
+          └── NO → ¿Tiene notas de colegio homologadas?
+                    ├── SÍ → Estrategia Notas de Colegio — Confianza MEDIA-BAJA
+                    └── NO → Estrategia Demográfica (programa + colegio) — Confianza BAJA
 ```
 
-> **¿Por qué ICFES?** En Colombia, las universidades exigen el puntaje ICFES (Saber 11) para admisión. Si dos estudiantes tienen puntajes ICFES similares, es probable que tengan rendimiento académico similar. Para estudiantes **extranjeros** sin ICFES (ej: primer semestre), el sistema usa un fallback demográfico con advertencia explícita al consejero.
+> **¿Por qué ICFES?** En Colombia, las universidades exigen el puntaje ICFES (Saber 11) para admisión. Si dos estudiantes tienen puntajes ICFES similares, es probable que tengan rendimiento académico similar. Para estudiantes **extranjeros** sin ICFES, el sistema utiliza las notas de colegio homologadas a escala colombiana (si fueron convertidas al momento de admisión). Si no hay datos de ninguna fuente, aplica un matching demográfico con advertencia explícita al consejero.
 
 ---
 
@@ -116,6 +118,7 @@ src/main/java/com/universidad/riesgoacademico/
 │   │   ├── PerfilAdmision.java      Datos de admisión (programa, colegio, país)
 │   │   ├── GradeEntry.java          Entry del índice invertido (estudianteId, nota)
 │   │   ├── MateriaEnRiesgo.java     Materia con nivel de riesgo [0.0, 1.0]
+│   │   ├── NotasColegio.java        Notas de colegio homologadas [0.0, 5.0]
 │   │   └── ResultadoRiesgo.java     Output: materias en riesgo + estrategia + gemelos
 │   │
 │   ├── algorithm/                   ← Algoritmos y estrategias (patrón Strategy)
@@ -123,6 +126,7 @@ src/main/java/com/universidad/riesgoacademico/
 │   │   ├── GradeSimilarityStrategy.java      Coseno sobre notas universitarias
 │   │   ├── ICFESSimilarityStrategy.java      Coseno sobre vector ICFES (5D)
 │   │   ├── HybridSimilarityStrategy.java     70% notas + 30% ICFES
+│   │   ├── HighSchoolSimilarityStrategy.java  Coseno sobre notas colegio homologadas
 │   │   └── DemographicFallbackStrategy.java  Matching demográfico (cold start)
 │   │
 │   └── service/                     ← Orquestación y contrato
@@ -149,7 +153,7 @@ src/main/java/com/universidad/riesgoacademico/
 
 | Patrón | Dónde | Por qué |
 |--------|-------|---------|
-| **Strategy** | `SimilarityStrategy` → 4 implementaciones | Selección automática de algoritmo según datos disponibles del estudiante |
+| **Strategy** | `SimilarityStrategy` → 5 implementaciones | Selección automática de algoritmo según datos disponibles del estudiante |
 | **Pipeline** | `AnalisisPipeline` (Cargar → Analizar → Exportar) | Desacoplar etapas de I/O del dominio (ADR-003) |
 | **Repository** | `InMemoryEstudianteRepository` | Abstraer persistencia del dominio |
 
@@ -213,7 +217,7 @@ java -Xmx6g -jar target/benchmarks.jar -p n=500000 -wi 1 -i 2 -f 1
 
 ## Suite de Pruebas
 
-### 91 tests · 0 fallos · 5 propiedades algebraicas
+### 93 tests · 0 fallos · 5 propiedades algebraicas
 
 | Archivo | Tests | Tipo | Qué verifica |
 |---------|:-----:|------|-------------|
@@ -270,7 +274,7 @@ java -Xmx6g -jar target/benchmarks.jar -p n=500000 -wi 1 -i 2 -f 1
 
 | Métrica | Umbral requerido | Resultado | Herramienta |
 |---------|:----------------:|:---------:|-------------|
-| Tests unitarios + PBT | ≥ 15 + ≥ 3 | **91 tests** (86 + 5) | JUnit 5 + jqwik |
+| Tests unitarios + PBT | ≥ 15 + ≥ 3 | **93 tests** (88 + 5) | JUnit 5 + jqwik |
 | Complejidad ciclomática | V(G) ≤ 10 | ✅ **0 violaciones** | PMD |
 | Line coverage | — | **96%** | JaCoCo |
 | Mutation score | ≥ 60% | **74%** | PIT (STRONGER) |
@@ -289,7 +293,7 @@ La especificación completa del problema está en [PROBLEMA.md](PROBLEMA.md):
 - **6 invariantes** (Inv1–Inv6) — verificadas con jqwik PBT
 - **14 casos borde** (CB-01 a CB-14) — todos con pruebas asociadas
 - **Restricción de escala:** N = 100,000 estudiantes, M = 500 materias, latencia < 500 ms
-- **Cold start multinivel:** 4 estrategias encadenadas (ICFES → demográfico)
+- **Cold start multinivel:** 5 estrategias encadenadas (ICFES → notas colegio → demográfico)
 - **Trabajo futuro** documentado (fuera del alcance)
 
 ---
@@ -318,8 +322,8 @@ julio-toscano-proyectoIntegrador/
 ├── src/
 │   ├── main/java/com/universidad/riesgoacademico/
 │   │   ├── domain/
-│   │   │   ├── model/        (8 clases)   # Entidades inmutables
-│   │   │   ├── algorithm/    (5 clases)   # Grafo + 4 estrategias
+│   │   │   ├── model/        (9 clases)   # Entidades inmutables
+│   │   │   ├── algorithm/    (6 clases)   # Grafo + 5 estrategias
 │   │   │   └── service/      (2 clases)   # Interfaz + servicio
 │   │   ├── infrastructure/   (5 clases)   # Pipeline, CSV, JSON, repositorio
 │   │   └── benchmark/        (3 clases)   # JMH benchmarks + baseline
